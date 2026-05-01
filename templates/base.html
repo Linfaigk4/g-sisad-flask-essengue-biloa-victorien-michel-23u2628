@@ -5,8 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>G-SISAD - {% block title %}Système d'Analyse de Données de Santé{% endblock %}</title>
     
-    <!-- Tailwind CSS compilé -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configuration Tailwind personnalisée -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        lime: '#84CC16',
+                        ivory: '#FFFBEA',
+                        pearl: '#D1D5DB',
+                        coral: '#FB7185',
+                        sage: '#A7F3D0',
+                        solar: '#FACC15',
+                        plum: '#7C3AED',
+                        'dark-bg': '#0F172A',
+                        'dark-surface': '#1E293B',
+                        'dark-surface-lighter': '#334155',
+                        'dark-border': '#475569',
+                        'dark-text': '#E2E8F0',
+                        'dark-text-secondary': '#94A3B8',
+                    }
+                }
+            }
+        }
+    </script>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,31 +45,191 @@
     <script src="https://cdn.plot.ly/plotly-2.27.1.min.js" charset="utf-8"></script>
     
     <style>
-        /* Smooth scrolling */
-        html {
-            scroll-behavior: smooth;
-        }
-        
-        /* Loading spinner adaptatif */
-        .spinner {
-            border: 3px solid rgba(132, 188, 22, 0.1);
-            border-radius: 50%;
-            border-top: 3px solid #84CC16;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Transition douce pour le thème */
+        /* Styles personnalisés */
         * {
-            transition-property: background-color, border-color, color, fill, stroke;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 200ms;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .glassmorphism {
+            background: rgba(255, 251, 234, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(132, 188, 22, 0.2);
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .glassmorphism:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-card {
+            background: rgba(255, 251, 234, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-primary {
+            background-color: #84CC16 !important;
+            color: white !important;
+            font-weight: 600 !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 0.5rem !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .btn-primary:hover {
+            background-color: #65A30D !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .btn-secondary {
+            background-color: #7C3AED !important;
+            color: white !important;
+            font-weight: 600 !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 0.5rem !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #6D28D9 !important;
+            transform: translateY(-2px) !important;
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, #84CC16 0%, #7C3AED 100%);
+        }
+        
+        .gradient-secondary {
+            background: linear-gradient(135deg, #FFFBEA 0%, #FFF6E0 100%);
+        }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, #84CC16 0%, #7C3AED 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.5rem 1rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            background: white;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #84CC16;
+            box-shadow: 0 0 0 3px rgba(132, 188, 22, 0.1);
+        }
+        
+        .form-label {
+            display: block;
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .badge-low {
+            background-color: #A7F3D0;
+            color: #065F46;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-medium {
+            background-color: #FACC15;
+            color: #854D0E;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-high {
+            background-color: #FB7185;
+            color: #7F1D1D;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        /* Dark mode styles */
+        .dark .glassmorphism {
+            background: rgba(30, 41, 59, 0.7);
+            border-color: #475569;
+        }
+        
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.8);
+        }
+        
+        .dark .form-input {
+            background: #334155;
+            border-color: #475569;
+            color: #E2E8F0;
+        }
+        
+        .dark .form-label {
+            color: #E2E8F0;
+        }
+        
+        .dark .gradient-secondary {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+        }
+        
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #FFFBEA;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #84CC16;
+            border-radius: 10px;
+        }
+        
+        .dark ::-webkit-scrollbar-track {
+            background: #1E293B;
         }
     </style>
     
@@ -62,45 +248,42 @@
                 </div>
                 
                 <div class="hidden md:flex items-center space-x-6">
-                    <a href="{{ url_for('index') }}" class="nav-link">
+                    <a href="{{ url_for('index') }}" class="text-gray-700 dark:text-dark-text hover:text-lime transition">
                         <i class="fas fa-home mr-1"></i> Accueil
                     </a>
                     {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('dashboard') }}" class="nav-link">
+                        <a href="{{ url_for('dashboard') }}" class="text-gray-700 dark:text-dark-text hover:text-lime transition">
                             <i class="fas fa-chart-line mr-1"></i> Dashboard
                         </a>
-                        <a href="{{ url_for('health_form') }}" class="nav-link">
+                        <a href="{{ url_for('health_form') }}" class="text-gray-700 dark:text-dark-text hover:text-lime transition">
                             <i class="fas fa-notes-medical mr-1"></i> Ma Santé
                         </a>
                         {% if current_user.role == 'admin' %}
-                            <a href="{{ url_for('admin_dashboard') }}" class="nav-link">
+                            <a href="{{ url_for('admin_dashboard') }}" class="text-gray-700 dark:text-dark-text hover:text-lime transition">
                                 <i class="fas fa-crown mr-1"></i> Admin
                             </a>
                         {% endif %}
-                        
-                        <!-- Theme toggle button will be inserted here by JS -->
-                        
                         <div class="relative group">
-                            <button class="flex items-center space-x-2 nav-link">
+                            <button class="flex items-center space-x-2 text-gray-700 dark:text-dark-text hover:text-lime">
                                 <i class="fas fa-user-circle text-2xl"></i>
                                 <span>{{ current_user.username }}</span>
                                 <i class="fas fa-chevron-down text-xs"></i>
                             </button>
-                            <div class="dropdown-menu absolute right-0 w-48 mt-2 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                <a href="{{ url_for('user_settings') }}" class="dropdown-item block px-4 py-2">
+                            <div class="absolute right-0 w-48 mt-2 py-2 bg-white dark:bg-dark-surface-lighter rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                <a href="{{ url_for('user_settings') }}" class="block px-4 py-2 text-gray-700 dark:text-dark-text hover:bg-lime/10">
                                     <i class="fas fa-cog mr-2"></i> Paramètres
                                 </a>
                                 <hr class="my-1 dark:border-dark-border">
-                                <a href="{{ url_for('logout') }}" class="dropdown-item block px-4 py-2 text-coral dark:text-coral">
+                                <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-coral hover:bg-coral/10">
                                     <i class="fas fa-sign-out-alt mr-2"></i> Déconnexion
                                 </a>
                             </div>
                         </div>
                     {% else %}
-                        <a href="{{ url_for('login') }}" class="nav-link">
+                        <a href="{{ url_for('login') }}" class="text-gray-700 dark:text-dark-text hover:text-lime transition">
                             <i class="fas fa-sign-in-alt mr-1"></i> Connexion
                         </a>
-                        <a href="{{ url_for('register') }}" class="btn-primary">
+                        <a href="{{ url_for('register') }}" class="btn-primary inline-block px-4 py-2 rounded-lg">
                             <i class="fas fa-user-plus mr-1"></i> Inscription
                         </a>
                     {% endif %}
@@ -116,24 +299,24 @@
         <!-- Mobile menu -->
         <div class="md:hidden hidden" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="{{ url_for('index') }}" class="nav-link block px-3 py-2 rounded-md text-base font-medium">
+                <a href="{{ url_for('index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-dark-text hover:text-lime hover:bg-lime/10">
                     Accueil
                 </a>
                 {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('dashboard') }}" class="nav-link block px-3 py-2 rounded-md text-base font-medium">
+                    <a href="{{ url_for('dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-dark-text hover:text-lime hover:bg-lime/10">
                         Dashboard
                     </a>
-                    <a href="{{ url_for('health_form') }}" class="nav-link block px-3 py-2 rounded-md text-base font-medium">
+                    <a href="{{ url_for('health_form') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-dark-text hover:text-lime hover:bg-lime/10">
                         Ma Santé
                     </a>
-                    <a href="{{ url_for('logout') }}" class="text-coral block px-3 py-2 rounded-md text-base font-medium">
+                    <a href="{{ url_for('logout') }}" class="block px-3 py-2 rounded-md text-base font-medium text-coral hover:bg-coral/10">
                         Déconnexion
                     </a>
                 {% else %}
-                    <a href="{{ url_for('login') }}" class="nav-link block px-3 py-2 rounded-md text-base font-medium">
+                    <a href="{{ url_for('login') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-dark-text hover:text-lime hover:bg-lime/10">
                         Connexion
                     </a>
-                    <a href="{{ url_for('register') }}" class="text-lime block px-3 py-2 rounded-md text-base font-medium">
+                    <a href="{{ url_for('register') }}" class="block px-3 py-2 rounded-md text-base font-medium text-lime hover:bg-lime/10">
                         Inscription
                     </a>
                 {% endif %}
@@ -145,7 +328,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg animate-slide-up
+                    <div class="mb-4 p-4 rounded-lg animate-fade-in
                                 {% if category == 'error' %}bg-coral/20 text-coral border-l-4 border-coral
                                 {% elif category == 'success' %}bg-sage/20 text-green-800 dark:text-sage border-l-4 border-sage
                                 {% else %}bg-lime/20 text-gray-700 dark:text-dark-text border-l-4 border-lime{% endif %}">
@@ -168,7 +351,7 @@
                 G-SISAD - Système d'Analyse de Données de Santé
             </p>
             <p class="text-sm text-gray-500 dark:text-dark-text-secondary/70 mt-2">
-                © 2026 - Intelligence Artificielle pour la Santé
+                © 2024 - Intelligence Artificielle pour la Santé
             </p>
         </div>
     </footer>
@@ -188,7 +371,7 @@
             });
         }
         
-        // Smooth scroll pour les ancres
+        // Smooth scroll
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 const target = document.querySelector(this.getAttribute('href'));
@@ -199,7 +382,7 @@
             });
         });
         
-        // Observer pour animations au scroll
+        // Observer animations
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
@@ -216,26 +399,6 @@
         
         document.querySelectorAll('.glass-card, .stat-card, .glassmorphism').forEach(el => {
             observer.observe(el);
-        });
-        
-        // Mettre à jour les graphiques lors du changement de thème
-        window.addEventListener('themeChanged', (e) => {
-            const isDark = e.detail.theme === 'dark';
-            
-            // Mettre à jour Plotly graphs
-            const plotlyGraphs = document.querySelectorAll('.plotly-graph');
-            plotlyGraphs.forEach(graph => {
-                const graphId = graph.id;
-                const graphData = Plotly.d3.select('#' + graphId).data();
-                if (graphData && graphData.length > 0) {
-                    const layout = {
-                        plot_bgcolor: isDark ? '#1E293B' : '#FFFBEA',
-                        paper_bgcolor: isDark ? '#1E293B' : '#FFFBEA',
-                        font: { color: isDark ? '#E2E8F0' : '#374151' }
-                    };
-                    Plotly.relayout(graphId, layout);
-                }
-            });
         });
     </script>
     
