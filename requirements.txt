@@ -12,3 +12,4 @@ scipy
 joblib
 plotly
 requests
+gunicorn

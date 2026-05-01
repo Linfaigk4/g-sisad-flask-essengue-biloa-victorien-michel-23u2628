@@ -1,0 +1,42 @@
+# render.yaml - Configuration pour déploiement automatique sur Render
+
+services:
+  - type: web
+    name: g-sisad
+    runtime: python
+    repo: https://github.com/yourusername/g-sisad-flask
+    plan: free
+    region: frankfurt
+    buildCommand: |
+      pip install -r requirements.txt
+      npm install
+      npm run build-css
+      python init_db.py
+    startCommand: gunicorn app:app --workers 4 --worker-class sync --timeout 120
+    envVars:
+      - key: FLASK_APP
+        value: app.py
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///gsisad.db
+      - key: ADMIN_EMAIL
+        value: admin@gsisad.com
+      - key: ADMIN_PASSWORD
+        value: admin123
+      - key: DEBUG
+        value: false
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+  - type: cron
+    name: g-sisad-backup
+    schedule: "0 0 * * *"  # Every day at midnight
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python backup_db.py
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///gsisad.db
