@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion Utilisateurs - G-SISAD{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-[#7C3AED]">Gestion des Utilisateurs</h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="text-[#84CC16] hover:text-[#65A30D] font-semibold">
+            ← Retour au dashboard
+        </a>
+    </div>
+    
+    <div class="glassmorphism rounded-xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gradient-to-r from-[#84CC16] to-[#7C3AED] text-white">
+                    <tr>
+                        <th class="px-6 py-4 text-left">ID</th>
+                        <th class="px-6 py-4 text-left">Nom d'utilisateur</th>
+                        <th class="px-6 py-4 text-left">Email</th>
+                        <th class="px-6 py-4 text-left">Rôle</th>
+                        <th class="px-6 py-4 text-left">Statut</th>
+                        <th class="px-6 py-4 text-left">Inscrit le</th>
+                        <th class="px-6 py-4 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for user in users %}
+                    <tr class="hover:bg-[#84CC16]/5 transition">
+                        <td class="px-6 py-4">{{ user.id }}</td>
+                        <td class="px-6 py-4 font-semibold">{{ user.username }}</td>
+                        <td class="px-6 py-4">{{ user.email }}</td>
+                        <td class="px-6 py-4">
+                            {% if user.role == 'admin' %}
+                            <span class="bg-[#7C3AED]/20 text-[#7C3AED] px-2 py-1 rounded-full text-sm">Admin</span>
+                            {% else %}
+                            <span class="bg-[#84CC16]/20 text-[#84CC16] px-2 py-1 rounded-full text-sm">Utilisateur</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if user.is_active %}
+                            <span class="text-[#84CC16]">✓ Actif</span>
+                            {% else %}
+                            <span class="text-[#FB7185]">✗ Suspendu</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex space-x-2">
+                                {% if user.id != current_user.id %}
+                                <a href="{{ url_for('toggle_user', user_id=user.id) }}" 
+                                   class="px-3 py-1 rounded-lg text-sm font-semibold transition
+                                   {% if user.is_active %}
+                                   bg-[#FB7185]/20 text-[#FB7185] hover:bg-[#FB7185] hover:text-white
+                                   {% else %}
+                                   bg-[#84CC16]/20 text-[#84CC16] hover:bg-[#84CC16] hover:text-white
+                                   {% endif %}">
+                                    {% if user.is_active %}Suspendre{% else %}Activer{% endif %}
+                                </a>
+                                {% else %}
+                                <span class="text-gray-400 text-sm">Vous-même</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Statistiques rapides -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glassmorphism rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-[#84CC16]">{{ users|length }}</div>
+            <div class="text-gray-600">Total utilisateurs</div>
+        </div>
+        <div class="glassmorphism rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-[#84CC16]">{{ users|selectattr('is_active')|list|length }}</div>
+            <div class="text-gray-600">Comptes actifs</div>
+        </div>
+        <div class="glassmorphism rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-[#84CC16]">{{ users|selectattr('role', 'equalto', 'admin')|list|length - 1 }}</div>
+            <div class="text-gray-600">Administrateurs</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

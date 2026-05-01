@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Admin - G-SISAD{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gradient">
+                <i class="fas fa-chart-line mr-2"></i>Dashboard Administrateur
+            </h1>
+            <p class="text-gray-600 dark:text-dark-text-secondary mt-1">
+                Visualisation des analyses EC2 et gestion du système
+            </p>
+        </div>
+        <a href="{{ url_for('admin_users') }}" class="btn-primary">
+            <i class="fas fa-users mr-2"></i>Gérer les utilisateurs
+        </a>
+    </div>
+    
+    <!-- Cartes de statistiques -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glass-card p-6 text-center hover:scale-105 transition-transform">
+            <div class="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-users text-white text-2xl"></i>
+            </div>
+            <div class="text-4xl font-bold text-lime">{{ total_users }}</div>
+            <div class="text-gray-600 dark:text-dark-text-secondary mt-1">Utilisateurs totaux</div>
+        </div>
+        
+        <div class="glass-card p-6 text-center hover:scale-105 transition-transform">
+            <div class="w-16 h-16 bg-sage/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-user-check text-sage text-2xl"></i>
+            </div>
+            <div class="text-4xl font-bold text-sage">{{ active_users }}</div>
+            <div class="text-gray-600 dark:text-dark-text-secondary mt-1">Utilisateurs actifs</div>
+        </div>
+        
+        <div class="glass-card p-6 text-center hover:scale-105 transition-transform">
+            <div class="w-16 h-16 bg-plum/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-heartbeat text-plum text-2xl"></i>
+            </div>
+            <div class="text-4xl font-bold text-plum">{{ "%.1f"|format(avg_health_score) }}</div>
+            <div class="text-gray-600 dark:text-dark-text-secondary mt-1">Score santé moyen</div>
+        </div>
+    </div>
+    
+    <!-- Analyses EC2 -->
+    <div class="glassmorphism rounded-xl p-6">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-lime/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-microchip text-lime text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-plum dark:text-plum">Analyses EC2</h2>
+                <span class="text-sm text-gray-500 dark:text-dark-text-secondary">{{ graphs_count }}/5 techniques</span>
+            </div>
+            {% if users_count < 10 %}
+            <div class="text-sm text-coral">
+                <i class="fas fa-info-circle mr-1"></i>
+                {{ users_count }}/10 utilisateurs avec données complètes
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if graphs and graphs_count > 0 %}
+            <div class="space-y-8">
+                {% for graph in graphs %}
+                <div class="bg-white/50 dark:bg-dark-surface/30 rounded-xl p-4">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-dark-text mb-4">{{ graph.title }}</h3>
+                    <div id="{{ graph.id }}" class="w-full" style="height: 450px;"></div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="text-6xl mb-4">📊</div>
+                <h3 class="text-xl font-semibold text-gray-700 dark:text-dark-text mb-2">
+                    Pas assez de données
+                </h3>
+                <p class="text-gray-500 dark:text-dark-text-secondary mb-4">
+                    Besoin d'au moins 10 utilisateurs avec des profils complets pour les analyses EC2.<br>
+                    Actuellement: {{ users_count }} utilisateurs avec données complètes.
+                </p>
+                <div class="space-x-4">
+                    <a href="{{ url_for('admin_users') }}" class="btn-primary inline-block">
+                        <i class="fas fa-user-plus mr-2"></i>Ajouter utilisateurs
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+<script>
+// Charger les graphiques Plotly
+document.addEventListener('DOMContentLoaded', () => {
+    {% if graphs %}
+        const graphsData = {{ graphs | tojson | safe }};
+        
+        graphsData.forEach(graph => {
+            const element = document.getElementById(graph.id);
+            if (element && graph.json) {
+                try {
+                    const figData = JSON.parse(graph.json);
+                    Plotly.newPlot(graph.id, figData.data, figData.layout, {
+                        responsive: true,
+                        displayModeBar: true,
+                        modeBarButtonsToRemove: ['lasso2d', 'select2d']
+                    });
+                } catch(e) {
+                    console.error('Erreur chargement graphique:', e);
+                }
+            }
+        });
+    {% endif %}
+});
+
+// Mettre à jour les graphiques quand le thème change
+window.addEventListener('themeChanged', (e) => {
+    const isDark = e.detail.theme === 'dark';
+    const layoutUpdate = {
+        plot_bgcolor: isDark ? '#1E293B' : '#FFFBEA',
+        paper_bgcolor: isDark ? '#1E293B' : '#FFFBEA',
+        font: { color: isDark ? '#E2E8F0' : '#374151' }
+    };
+    
+    document.querySelectorAll('.plotly-graph, [id^="graph"]').forEach(graph => {
+        const graphId = graph.id;
+        if (graphId && Plotly.getAttribute(graphId)) {
+            Plotly.relayout(graphId, layoutUpdate);
+        }
+    });
+});
+</script>
+{% endblock %}

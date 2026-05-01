@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Mes Paramètres - G-SISAD{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <h1 class="text-3xl font-bold text-[#7C3AED]">Paramètres Personnels</h1>
+    
+    <div class="glassmorphism rounded-xl p-6 shadow-lg">
+        <h2 class="text-2xl font-semibold text-[#7C3AED] mb-4">Mon Profil</h2>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Nom d'utilisateur</label>
+                <input type="text" value="{{ current_user.username }}" class="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50" readonly>
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Email</label>
+                <input type="email" value="{{ current_user.email }}" class="w-full px-4 py-2 rounded-lg border border-gray-300">
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Nouveau mot de passe</label>
+                <input type="password" placeholder="Laissez vide pour ne pas changer" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#84CC16] focus:outline-none">
+            </div>
+            
+            <button class="btn-primary text-white px-6 py-2 rounded-lg font-semibold">
+                Mettre à jour mon profil
+            </button>
+        </div>
+    </div>
+    
+    <div class="glassmorphism rounded-xl p-6 shadow-lg">
+        <h2 class="text-2xl font-semibold text-[#7C3AED] mb-4">Préférences de notification</h2>
+        
+        <div class="space-y-3">
+            <label class="flex items-center space-x-3 cursor-pointer">
+                <input type="checkbox" class="w-5 h-5 text-[#84CC16] rounded">
+                <span>Recevoir des rappels pour mon bilan santé</span>
+            </label>
+            
+            <label class="flex items-center space-x-3 cursor-pointer">
+                <input type="checkbox" class="w-5 h-5 text-[#84CC16] rounded">
+                <span>Notifications des nouvelles analyses IA</span>
+            </label>
+            
+            <label class="flex items-center space-x-3 cursor-pointer">
+                <input type="checkbox" class="w-5 h-5 text-[#84CC16] rounded">
+                <span>Rapport hebdomadaire par email</span>
+            </label>
+        </div>
+    </div>
+    
+    <div class="glassmorphism rounded-xl p-6 shadow-lg">
+        <h2 class="text-2xl font-semibold text-[#7C3AED] mb-4">Export de données</h2>
+        
+        <div class="flex space-x-4">
+            <button class="bg-[#84CC16] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#65A30D] transition">
+                 Exporter mon rapport PDF
+            </button>
+            <button class="border-2 border-[#84CC16] text-[#84CC16] px-6 py-2 rounded-lg font-semibold hover:bg-[#84CC16] hover:text-white transition">
+                 Exporter mes données (CSV)
+            </button>
+        </div>
+    </div>
+    
+    <div class="text-center">
+        <a href="{{ url_for('logout') }}" class="text-[#FB7185] hover:text-[#F43F5E] font-semibold transition">
+            Se déconnecter
+        </a>
+    </div>
+</div>
+{% endblock %}

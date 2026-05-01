@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Accès interdit - G-SISAD{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+    <div class="glassmorphism rounded-2xl p-12 text-center max-w-md">
+        <div class="text-8xl mb-6">🔒</div>
+        <h1 class="text-4xl font-bold text-coral mb-4">403 - Accès interdit</h1>
+        <p class="text-gray-600 dark:text-dark-text-secondary mb-6">
+            Vous n'avez pas les permissions nécessaires pour accéder à cette page.
+        </p>
+        <div class="space-x-4">
+            <a href="{{ url_for('index') }}" class="btn-primary inline-block">
+                <i class="fas fa-home mr-2"></i>Accueil
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn-secondary inline-block">
+                <i class="fas fa-chart-line mr-2"></i>Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

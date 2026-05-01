@@ -1,0 +1,19 @@
+{
+  "name": "g-sisad-flask",
+  "version": "1.0.0",
+  "description": "G-SISAD Health Analytics System",
+  "scripts": {
+    "build-css": "tailwindcss -i ./src/css/input.css -o ./static/css/output.css --minify",
+    "watch-css": "tailwindcss -i ./src/css/input.css -o ./static/css/output.css --watch",
+    "dev": "concurrently \"npm run watch-css\" \"python app.py\"",
+    "update-browsers": "npx update-browserslist-db@latest"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

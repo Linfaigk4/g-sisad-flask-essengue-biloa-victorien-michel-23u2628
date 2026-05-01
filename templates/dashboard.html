@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - G-SISAD{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-[#7C3AED]">Bonjour, {{ current_user.username }} !</h1>
+            <p class="text-gray-600 mt-2">Bienvenue sur votre espace santé personnalisé</p>
+        </div>
+        <a href="{{ url_for('health_form') }}" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+            + Mettre à jour ma santé
+        </a>
+    </div>
+
+    {% if metrics %}
+    <!-- Métriques santé -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glassmorphism rounded-xl p-6 shadow-lg">
+            <div class="text-[#84CC16] text-3xl mb-2"></div>
+            <div class="text-2xl font-bold text-gray-800">{{ "%.1f"|format(metrics.bmi) }}</div>
+            <div class="text-gray-600">IMC</div>
+            {% if metrics.bmi < 18.5 %}
+            <div class="text-sm text-[#FB7185] mt-1">Insuffisance pondérale</div>
+            {% elif metrics.bmi < 25 %}
+            <div class="text-sm text-[#84CC16] mt-1">Poids normal</div>
+            {% elif metrics.bmi < 30 %}
+            <div class="text-sm text-[#FACC15] mt-1">Surpoids</div>
+            {% else %}
+            <div class="text-sm text-[#FB7185] mt-1">Obésité</div>
+            {% endif %}
+        </div>
+        
+        <div class="glassmorphism rounded-xl p-6 shadow-lg">
+            <div class="text-[#84CC16] text-3xl mb-2"></div>
+            <div class="text-2xl font-bold text-gray-800">{{ "%.0f"|format(metrics.bmr) }}</div>
+            <div class="text-gray-600">BMR (calories/jour)</div>
+            <div class="text-sm text-gray-500 mt-1">Métabolisme de base</div>
+        </div>
+        
+        <div class="glassmorphism rounded-xl p-6 shadow-lg">
+            <div class="text-[#84CC16] text-3xl mb-2"></div>
+            <div class="text-2xl font-bold text-gray-800">{{ metrics.health_score }}/100</div>
+            <div class="text-gray-600">Score de santé</div>
+            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div class="bg-[#84CC16] h-2 rounded-full" style="width: {{ metrics.health_score }}%"></div>
+            </div>
+        </div>
+        
+        <div class="glassmorphism rounded-xl p-6 shadow-lg">
+            <div class="text-[#84CC16] text-3xl mb-2"></div>
+            <div class="text-2xl font-bold text-gray-800">
+                {% if metrics.risk_level == 'high' %}
+                <span class="text-[#FB7185]">Élevé</span>
+                {% elif metrics.risk_level == 'medium' %}
+                <span class="text-[#FACC15]">Moyen</span>
+                {% else %}
+                <span class="text-[#84CC16]">Faible</span>
+                {% endif %}
+            </div>
+            <div class="text-gray-600">Risque santé</div>
+        </div>
+    </div>
+
+    <!-- Graphiques personnalisés -->
+    <div class="glassmorphism rounded-xl p-6 shadow-lg">
+        <h2 class="text-2xl font-semibold text-[#7C3AED] mb-4">Évolution de votre santé</h2>
+        <canvas id="healthChart" height="100"></canvas>
+    </div>
+
+    <!-- Prédictions IA -->
+    <div class="glassmorphism rounded-xl p-6 shadow-lg">
+        <h2 class="text-2xl font-semibold text-[#7C3AED] mb-4">Recommandations personnalisées</h2>
+        <div id="aiPredictions" class="space-y-4">
+            <div class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#84CC16]"></div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Aucune donnée -->
+    <div class="glassmorphism rounded-xl p-12 text-center">
+        <div class="text-6xl mb-4"></div>
+        <h3 class="text-2xl font-semibold text-gray-800 mb-2">Aucune donnée santé</h3>
+        <p class="text-gray-600 mb-6">Complétez votre profil pour recevoir des analyses personnalisées</p>
+        <a href="{{ url_for('health_form') }}" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold inline-block">
+            Commencer mon bilan santé
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Graphique d'évolution (simulé avec données de démonstration)
+{% if metrics %}
+const ctx = document.getElementById('healthChart').getContext('2d');
+const healthChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+        datasets: [{
+            label: 'Score de santé',
+            data: [65, 68, 72, 70, 75, {{ metrics.health_score }}],
+            borderColor: '#84CC16',
+            backgroundColor: 'rgba(132, 188, 22, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'IMC',
+            data: [26, 25.5, 24.8, 24.5, 24.2, {{ "%.1f"|format(metrics.bmi) }}],
+            borderColor: '#7C3AED',
+            backgroundColor: 'rgba(124, 58, 237, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        }
+    }
+});
+{% endif %}
+
+// Charger les prédictions IA
+fetch('/api/health-predictions')
+    .then(response => response.json())
+    .then(data => {
+        const container = document.getElementById('aiPredictions');
+        if (data.error) {
+            container.innerHTML = '<div class="text-center text-gray-500 py-4">Données insuffisantes pour les prédictions</div>';
+            return;
+        }
+        
+        let html = '<div class="grid md:grid-cols-2 gap-4">';
+        
+        if (data.regression_simple) {
+            html += `
+                <div class="bg-gradient-to-br from-[#FFFBEA] to-white rounded-lg p-4 border border-[#84CC16]/20">
+                    <div class="font-semibold text-[#7C3AED] mb-2"> Régression IMC vs Poids</div>
+                    <div class="text-sm text-gray-600">Coefficient: ${data.regression_simple.coefficient.toFixed(2)}</div>
+                    <div class="text-sm text-gray-600">Intercept: ${data.regression_simple.intercept.toFixed(2)}</div>
+                </div>
+            `;
+        }
+        
+        if (data.knn_accuracy) {
+            html += `
+                <div class="bg-gradient-to-br from-[#FFFBEA] to-white rounded-lg p-4 border border-[#84CC16]/20">
+                    <div class="font-semibold text-[#7C3AED] mb-2"> Précision KNN</div>
+                    <div class="text-sm text-gray-600">${(data.knn_accuracy * 100).toFixed(1)}% de précision</div>
+                </div>
+            `;
+        }
+        
+        if (data.risk_factors) {
+            html += `
+                <div class="bg-gradient-to-br from-[#FFFBEA] to-white rounded-lg p-4 border border-[#84CC16]/20 col-span-2">
+                    <div class="font-semibold text-[#7C3AED] mb-2"> Facteurs de risque importants</div>
+                    <div class="grid grid-cols-5 gap-2 text-center text-sm">
+                        <div>Âge: ${(data.risk_factors[0]*100).toFixed(1)}%</div>
+                        <div>Poids: ${(data.risk_factors[1]*100).toFixed(1)}%</div>
+                        <div>Taille: ${(data.risk_factors[2]*100).toFixed(1)}%</div>
+                        <div>Sommeil: ${(data.risk_factors[3]*100).toFixed(1)}%</div>
+                        <div>Stress: ${(data.risk_factors[4]*100).toFixed(1)}%</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        container.innerHTML = html;
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        document.getElementById('aiPredictions').innerHTML = '<div class="text-center text-gray-500 py-4">Service IA temporairement indisponible</div>';
+    });
+</script>
+{% endblock %}

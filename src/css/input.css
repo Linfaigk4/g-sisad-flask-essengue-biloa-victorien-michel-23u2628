@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Transitions pour le changement de thème */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease;
+}
+
+/* Styles de base avec support dark mode */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  
+  body {
+    @apply bg-ivory text-gray-800 dark:bg-dark-bg dark:text-dark-text;
+    transition: background-color 0.3s ease, color 0.2s ease;
+  }
+  
+  /* Scrollbar personnalisée dark mode */
+  body.dark ::-webkit-scrollbar-track {
+    background: #1E293B;
+  }
+  
+  body.dark ::-webkit-scrollbar-thumb {
+    background: #84CC16;
+  }
+  
+  body.dark ::-webkit-scrollbar-thumb:hover {
+    background: #65A30D;
+  }
+}
+
+/* Amélioration des contrastes pour les formulaires */
+@layer components {
+  /* Champs de formulaire - Mode clair avec meilleur contraste */
+  .form-input,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="date"],
+  select,
+  textarea {
+    @apply w-full px-4 py-3 rounded-lg border-2 
+           bg-white text-gray-800 
+           border-gray-300 
+           focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/30 
+           transition-all duration-200;
+  }
+  
+  /* Placeholder plus visible */
+  .form-input::placeholder,
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-gray-500;
+  }
+  
+  /* Labels plus foncés */
+  .form-label,
+  label {
+    @apply block text-gray-800 font-semibold mb-2;
+  }
+  
+  /* mode sombre - meilleur contraste aussi */
+  .dark .form-input,
+  .dark input[type="text"],
+  .dark input[type="email"],
+  .dark input[type="password"],
+  .dark input[type="number"],
+  .dark select,
+  .dark textarea {
+    @apply bg-dark-surface-lighter text-dark-text border-dark-border;
+  }
+  
+  .dark .form-input::placeholder,
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    @apply text-dark-text-secondary;
+  }
+  
+  .dark .form-label,
+  .dark label {
+    @apply text-dark-text;
+  }
+  
+  /* Champs en lecture seule */
+  .form-input[readonly],
+  input[readonly],
+  select[readonly] {
+    @apply bg-gray-100 text-gray-600 cursor-not-allowed;
+  }
+  
+  .dark .form-input[readonly],
+  .dark input[readonly] {
+    @apply bg-dark-surface text-dark-text-secondary;
+  }
+  
+  /* Champs désactivés */
+  .form-input:disabled,
+  input:disabled,
+  select:disabled {
+    @apply bg-gray-100 text-gray-400 cursor-not-allowed opacity-60;
+  }
+  
+  /* Groupes de formulaires */
+  .form-group {
+    @apply mb-5;
+  }
+  
+  /* Messages d'erreur */
+  .form-error {
+    @apply text-coral text-sm mt-1;
+  }
+  
+  /* Messages d'aide */
+  .form-help {
+    @apply text-gray-500 text-sm mt-1 dark:text-dark-text-secondary;
+  }
+}
+@layer utilities {
+  /* Gradients adaptatifs */
+  .gradient-primary {
+    @apply bg-gradient-to-r from-lime to-plum;
+  }
+  
+  .gradient-secondary {
+    @apply bg-gradient-to-br from-ivory to-sage/30
+           dark:from-dark-bg dark:to-dark-surface;
+  }
+  
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-gradient-to-r from-lime to-plum bg-clip-text text-transparent;
+  }
+  
+  /* Animations */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  /* Theme toggle button */
+  .theme-toggle {
+    @apply relative w-12 h-6 rounded-full transition-colors duration-300
+           bg-gray-300 dark:bg-plum;
+  }
+  
+  .theme-toggle-slider {
+    @absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300;
+  }
+  
+  .theme-toggle.dark .theme-toggle-slider {
+    transform: translateX(1.5rem);
+  }
+}

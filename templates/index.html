@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center">
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div>
+            <h1 class="text-5xl font-bold mb-6">
+                <span class="text-[#84CC16]">G-SISAD</span>
+                <span class="text-[#7C3AED]">Santé Intelligente</span>
+            </h1>
+            <p class="text-xl text-gray-600 mb-8">
+                Analyse prédictive de données de santé avec IA. Suivez vos métriques, 
+                obtenez des prédictions précises et améliorez votre bien-être.
+            </p>
+            <div class="flex space-x-4">
+                <a href="{{ url_for('register') }}" class="btn-primary text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                    Commencer
+                </a>
+                <a href="{{ url_for('login') }}" class="border-2 border-[#84CC16] text-[#84CC16] px-8 py-3 rounded-lg font-semibold hover:bg-[#84CC16] hover:text-white transition">
+                    Connexion
+                </a>
+            </div>
+        </div>
+        <div class="relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-[#84CC16] to-[#7C3AED] rounded-full blur-3xl opacity-20"></div>
+            <div class="relative bg-white/30 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-[#84CC16] rounded-full flex items-center justify-center text-white"></div>
+                        <div><div class="font-semibold">5 techniques EC2</div><div class="text-sm text-gray-600">Analyses avancées</div></div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-[#7C3AED] rounded-full flex items-center justify-center text-white"></div>
+                        <div><div class="font-semibold">IA prédictive</div><div class="text-sm text-gray-600">KNN, Random Forest, SVM</div></div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-[#FB7185] rounded-full flex items-center justify-center text-white"></div>
+                        <div><div class="font-semibold">Dashboard personnalisé</div><div class="text-sm text-gray-600">Suivi en temps réel</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+    .relative { animation: float 6s ease-in-out infinite; }
+</style>
+{% endblock %}

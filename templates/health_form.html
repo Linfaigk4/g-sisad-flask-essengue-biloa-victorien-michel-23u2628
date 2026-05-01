@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Bilan Santé - G-SISAD{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="glassmorphism rounded-2xl p-8 shadow-xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-[#7C3AED]">Bilan de Santé</h1>
+            <p class="text-gray-600 mt-2">Complétez vos informations pour une analyse personnalisée</p>
+        </div>
+        
+        <form method="POST" class="space-y-6" id="healthForm">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Âge</label>
+                    <input type="number" name="age" required min="1" max="120"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#84CC16] focus:outline-none focus:ring-2 focus:ring-[#84CC16] transition">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Genre</label>
+                    <select name="gender" required
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#84CC16] focus:outline-none focus:ring-2 focus:ring-[#84CC16] transition">
+                        <option value="male">Homme</option>
+                        <option value="female">Femme</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Poids (kg)</label>
+                    <input type="number" name="weight" required step="0.1" min="20" max="300"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#84CC16] focus:outline-none focus:ring-2 focus:ring-[#84CC16] transition">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Taille (cm)</label>
+                    <input type="number" name="height" required step="0.1" min="100" max="250"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#84CC16] focus:outline-none focus:ring-2 focus:ring-[#84CC16] transition">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Niveau d'activité</label>
+                    <select name="activity_level" required
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#84CC16] focus:outline-none focus:ring-2 focus:ring-[#84CC16] transition">
+                        <option value="sedentary">Sédentaire</option>
+                        <option value="light">Léger</option>
+                        <option value="moderate">Modéré</option>
+                        <option value="active">Actif</option>
+                        <option value="very_active">Très actif</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Heures de sommeil / nuit</label>
+                    <input type="number" name="sleep_hours" required step="0.5" min="0" max="24"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#84CC16] focus:outline-none focus:ring-2 focus:ring-[#84CC16] transition">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Niveau de stress (1-10)</label>
+                    <input type="number" name="stress_level" required min="1" max="10"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#84CC16] focus:outline-none focus:ring-2 focus:ring-[#84CC16] transition">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Pression artérielle - Systolique</label>
+                    <input type="number" name="systolic_bp" required min="70" max="250"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#84CC16] focus:outline-none focus:ring-2 focus:ring-[#84CC16] transition">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Pression artérielle - Diastolique</label>
+                    <input type="number" name="diastolic_bp" required min="40" max="150"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#84CC16] focus:outline-none focus:ring-2 focus:ring-[#84CC16] transition">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Antécédents médicaux</label>
+                <textarea name="medical_history" rows="3"
+                          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#84CC16] focus:outline-none focus:ring-2 focus:ring-[#84CC16] transition"
+                          placeholder="Diabète, hypertension, maladies cardiaques..."></textarea>
+            </div>
+            
+            <!-- Calculs en temps réel -->
+            <div class="bg-gradient-to-r from-[#84CC16]/10 to-[#7C3AED]/10 rounded-xl p-4">
+                <h3 class="font-semibold text-[#7C3AED] mb-3">Calculs en temps réel</h3>
+                <div class="grid md:grid-cols-3 gap-4 text-center">
+                    <div>
+                        <div class="text-sm text-gray-600">IMC</div>
+                        <div class="text-2xl font-bold text-[#84CC16]" id="bmiDisplay">-</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-600">BMR (calories)</div>
+                        <div class="text-2xl font-bold text-[#84CC16]" id="bmrDisplay">-</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-600">Score santé</div>
+                        <div class="text-2xl font-bold text-[#84CC16]" id="scoreDisplay">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-primary w-full text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                Enregistrer mon bilan santé
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Calcul automatique en temps réel
+const weightInput = document.querySelector('[name="weight"]');
+const heightInput = document.querySelector('[name="height"]');
+const ageInput = document.querySelector('[name="age"]');
+const genderSelect = document.querySelector('[name="gender"]');
+const sleepInput = document.querySelector('[name="sleep_hours"]');
+const stressInput = document.querySelector('[name="stress_level"]');
+
+function calculateBMI() {
+    const weight = parseFloat(weightInput.value);
+    const height = parseFloat(heightInput.value);
+    if (weight && height) {
+        const bmi = weight / ((height/100) ** 2);
+        document.getElementById('bmiDisplay').textContent = bmi.toFixed(1);
+        return bmi;
+    }
+    return null;
+}
+
+function calculateBMR() {
+    const weight = parseFloat(weightInput.value);
+    const height = parseFloat(heightInput.value);
+    const age = parseInt(ageInput.value);
+    const gender = genderSelect.value;
+    
+    if (weight && height && age) {
+        let bmr;
+        if (gender === 'male') {
+            bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+        } else {
+            bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+        }
+        document.getElementById('bmrDisplay').textContent = Math.round(bmr);
+        return bmr;
+    }
+    return null;
+}
+
+function calculateHealthScore() {
+    const bmi = calculateBMI();
+    const sleep = parseFloat(sleepInput.value);
+    const stress = parseInt(stressInput.value);
+    
+    if (bmi && sleep && stress) {
+        let score = 100;
+        if (bmi < 18.5 || bmi > 25) score -= 20;
+        if (bmi > 30) score -= 40;
+        if (sleep < 6 || sleep > 9) score -= 15;
+        score -= stress * 2;
+        score = Math.max(0, Math.min(100, score));
+        document.getElementById('scoreDisplay').textContent = Math.round(score);
+        return score;
+    }
+    return null;
+}
+
+[weightInput, heightInput, ageInput, genderSelect, sleepInput, stressInput].forEach(input => {
+    if (input) {
+        input.addEventListener('input', () => {
+            calculateBMI();
+            calculateBMR();
+            calculateHealthScore();
+        });
+    }
+});
+</script>
+{% endblock %}
