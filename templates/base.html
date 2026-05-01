@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>G-SISAD - {% block title %}Système d'Analyse de Données de Santé{% endblock %}</title>
     
-    <!-- Tailwind CSS CDN - Version stable -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Configuration Tailwind personnalisée -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -16,11 +15,12 @@
                 extend: {
                     colors: {
                         lime: '#84CC16',
-                        ivory: '#FFFBEA',
+                        plum: '#7C3AED',
                         coral: '#FB7185',
                         sage: '#A7F3D0',
                         solar: '#FACC15',
-                        plum: '#7C3AED',
+                        'dark-bg': '#0F172A',
+                        'dark-surface': '#1E293B',
                     }
                 }
             }
@@ -33,14 +33,11 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Chart.js -->
+    <!-- Chart.js & Plotly -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
-    <!-- Plotly -->
     <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
     
     <style>
-        /* Styles personnalisés essentiels */
         * {
             font-family: 'Inter', sans-serif;
         }
@@ -48,6 +45,11 @@
         body {
             background: linear-gradient(135deg, #FFFBEA 0%, #FFF6E0 100%);
             min-height: 100vh;
+        }
+        
+        /* Dark mode body */
+        .dark body {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
         }
         
         /* Glassmorphism */
@@ -59,21 +61,28 @@
             transition: all 0.3s ease;
         }
         
+        .dark .glassmorphism {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(71, 85, 105, 0.5);
+        }
+        
         .glassmorphism:hover {
             transform: translateY(-4px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
         
-        /* Boutons */
+        /* Buttons */
         .btn-primary {
             background-color: #84CC16 !important;
             color: white !important;
             font-weight: 600 !important;
-            padding: 0.5rem 1.5rem !important;
+            padding: 0.75rem 1.5rem !important;
             border-radius: 0.5rem !important;
             transition: all 0.3s ease !important;
-            display: inline-block !important;
-            text-align: center !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.5rem !important;
         }
         
         .btn-primary:hover {
@@ -86,10 +95,13 @@
             background-color: #7C3AED !important;
             color: white !important;
             font-weight: 600 !important;
-            padding: 0.5rem 1.5rem !important;
+            padding: 0.75rem 1.5rem !important;
             border-radius: 0.5rem !important;
             transition: all 0.3s ease !important;
-            display: inline-block !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.5rem !important;
         }
         
         .btn-secondary:hover {
@@ -97,7 +109,23 @@
             transform: translateY(-2px) !important;
         }
         
-        /* Gradient text */
+        /* Theme toggle button */
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(132, 188, 22, 0.1);
+            transform: scale(1.1);
+        }
+        
+        /* Text gradient */
         .text-gradient {
             background: linear-gradient(135deg, #84CC16 0%, #7C3AED 100%);
             -webkit-background-clip: text;
@@ -108,11 +136,17 @@
         /* Form inputs */
         .form-input {
             width: 100%;
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1rem;
             border: 1px solid #D1D5DB;
             border-radius: 0.5rem;
             transition: all 0.2s ease;
             background: white;
+        }
+        
+        .dark .form-input {
+            background: #334155;
+            border-color: #475569;
+            color: #E2E8F0;
         }
         
         .form-input:focus {
@@ -128,7 +162,11 @@
             margin-bottom: 0.5rem;
         }
         
-        /* Animation float */
+        .dark .form-label {
+            color: #E2E8F0;
+        }
+        
+        /* Animations */
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
@@ -138,24 +176,13 @@
             animation: float 3s ease-in-out infinite;
         }
         
-        /* Dark mode */
-        .dark body {
-            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        .dark .glassmorphism {
-            background: rgba(30, 41, 59, 0.8);
-            border-color: #475569;
-        }
-        
-        .dark .form-input {
-            background: #334155;
-            border-color: #475569;
-            color: #E2E8F0;
-        }
-        
-        .dark .form-label {
-            color: #E2E8F0;
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
         }
     </style>
     
@@ -174,18 +201,18 @@
                 </div>
                 
                 <div class="hidden md:flex items-center space-x-6">
-                    <a href="{{ url_for('index') }}" class="text-gray-700 hover:text-[#84CC16] transition">
+                    <a href="{{ url_for('index') }}" class="text-gray-700 dark:text-gray-300 hover:text-[#84CC16] transition">
                         <i class="fas fa-home mr-1"></i> Accueil
                     </a>
                     {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('dashboard') }}" class="text-gray-700 hover:text-[#84CC16] transition">
+                        <a href="{{ url_for('dashboard') }}" class="text-gray-700 dark:text-gray-300 hover:text-[#84CC16] transition">
                             <i class="fas fa-chart-line mr-1"></i> Dashboard
                         </a>
-                        <a href="{{ url_for('health_form') }}" class="text-gray-700 hover:text-[#84CC16] transition">
+                        <a href="{{ url_for('health_form') }}" class="text-gray-700 dark:text-gray-300 hover:text-[#84CC16] transition">
                             <i class="fas fa-notes-medical mr-1"></i> Ma Santé
                         </a>
                         {% if current_user.role == 'admin' %}
-                            <a href="{{ url_for('admin_dashboard') }}" class="text-gray-700 hover:text-[#84CC16] transition">
+                            <a href="{{ url_for('admin_dashboard') }}" class="text-gray-700 dark:text-gray-300 hover:text-[#84CC16] transition">
                                 <i class="fas fa-crown mr-1"></i> Admin
                             </a>
                         {% endif %}
@@ -193,17 +220,22 @@
                             <i class="fas fa-sign-out-alt mr-1"></i> Déconnexion
                         </a>
                     {% else %}
-                        <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-[#84CC16] transition">
+                        <a href="{{ url_for('login') }}" class="text-gray-700 dark:text-gray-300 hover:text-[#84CC16] transition">
                             <i class="fas fa-sign-in-alt mr-1"></i> Connexion
                         </a>
                         <a href="{{ url_for('register') }}" class="btn-primary">
-                            <i class="fas fa-user-plus mr-1"></i> Inscription
+                            <i class="fas fa-user-plus"></i> Inscription
                         </a>
                     {% endif %}
+                    
+                    <!-- Theme Toggle Button -->
+                    <button onclick="toggleTheme()" class="theme-toggle">
+                        <i id="theme-icon" class="fas fa-moon text-gray-700 dark:text-yellow-500"></i>
+                    </button>
                 </div>
                 
                 <!-- Mobile menu button -->
-                <button class="md:hidden text-gray-700" id="mobile-menu-button">
+                <button class="md:hidden text-gray-700 dark:text-gray-300" id="mobile-menu-button">
                     <i class="fas fa-bars text-2xl"></i>
                 </button>
             </div>
@@ -212,15 +244,18 @@
         <!-- Mobile menu -->
         <div class="md:hidden hidden px-4 pb-4" id="mobile-menu">
             <div class="space-y-2">
-                <a href="{{ url_for('index') }}" class="block py-2 text-gray-700 hover:text-[#84CC16]">Accueil</a>
+                <a href="{{ url_for('index') }}" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-[#84CC16]">Accueil</a>
                 {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('dashboard') }}" class="block py-2 text-gray-700 hover:text-[#84CC16]">Dashboard</a>
-                    <a href="{{ url_for('health_form') }}" class="block py-2 text-gray-700 hover:text-[#84CC16]">Ma Santé</a>
+                    <a href="{{ url_for('dashboard') }}" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-[#84CC16]">Dashboard</a>
+                    <a href="{{ url_for('health_form') }}" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-[#84CC16]">Ma Santé</a>
                     <a href="{{ url_for('logout') }}" class="block py-2 text-[#FB7185]">Déconnexion</a>
                 {% else %}
-                    <a href="{{ url_for('login') }}" class="block py-2 text-gray-700 hover:text-[#84CC16]">Connexion</a>
+                    <a href="{{ url_for('login') }}" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-[#84CC16]">Connexion</a>
                     <a href="{{ url_for('register') }}" class="block py-2 text-[#84CC16]">Inscription</a>
                 {% endif %}
+                <button onclick="toggleTheme()" class="block w-full text-left py-2 text-gray-700 dark:text-gray-300">
+                    <i id="mobile-theme-icon" class="fas fa-moon mr-2"></i> Thème
+                </button>
             </div>
         </div>
     </nav>
@@ -229,10 +264,11 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg
+                    <div class="mb-4 p-4 rounded-lg animate-fade-in
                                 {% if category == 'error' %}bg-red-100 text-red-700 border-l-4 border-red-500
                                 {% elif category == 'success' %}bg-green-100 text-green-700 border-l-4 border-green-500
                                 {% else %}bg-blue-100 text-blue-700 border-l-4 border-blue-500{% endif %}">
+                        <i class="fas fa-{% if category == 'error' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %} mr-2"></i>
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -242,19 +278,46 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="mt-12 py-6 bg-white/50 border-t border-[#84CC16]/20 text-center">
+    <footer class="mt-12 py-6 bg-white/50 dark:bg-dark-surface/30 border-t border-[#84CC16]/20 dark:border-dark-border text-center">
         <div class="container mx-auto px-6">
-            <p class="text-gray-600">
+            <p class="text-gray-600 dark:text-gray-400">
                 <i class="fas fa-heart text-[#FB7185] mr-1"></i> 
                 G-SISAD - Système d'Analyse de Données de Santé
             </p>
-            <p class="text-sm text-gray-500 mt-2">
+            <p class="text-sm text-gray-500 dark:text-gray-500 mt-2">
                 © 2024 - Intelligence Artificielle pour la Santé
             </p>
         </div>
     </footer>
 
     <script>
+        // Theme management
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('theme-icon').className = 'fas fa-moon';
+                if (document.getElementById('mobile-theme-icon')) {
+                    document.getElementById('mobile-theme-icon').className = 'fas fa-moon mr-2';
+                }
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('theme-icon').className = 'fas fa-sun';
+                if (document.getElementById('mobile-theme-icon')) {
+                    document.getElementById('mobile-theme-icon').className = 'fas fa-sun mr-2';
+                }
+            }
+        }
+        
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+            const themeIcon = document.getElementById('theme-icon');
+            if (themeIcon) themeIcon.className = 'fas fa-sun';
+        }
+        
         // Mobile menu toggle
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
