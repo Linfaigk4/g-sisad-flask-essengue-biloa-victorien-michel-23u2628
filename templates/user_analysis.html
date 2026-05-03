@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+
+{% block title %}Analyse Personnelle - G-SISAD{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gradient">
+                <i class="fas fa-chart-line mr-2"></i>Analyse Personnelle
+            </h1>
+            <p class="text-gray-600 dark:text-dark-text-secondary mt-1">
+                Visualisez vos propres données santé avec les 5 techniques EC2
+            </p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i>Retour Dashboard
+        </a>
+    </div>
+
+    <!-- Sélection de la technique -->
+    <div class="glassmorphism rounded-xl p-4">
+        <div class="flex flex-wrap gap-3 justify-center">
+            <button onclick="showAnalysis('regression_simple')" class="analysis-btn active" id="btn_regression_simple">
+                <i class="fas fa-chart-line mr-2"></i>1. Régression Simple
+            </button>
+            <button onclick="showAnalysis('regression_multiple')" class="analysis-btn" id="btn_regression_multiple">
+                <i class="fas fa-chart-scatter mr-2"></i>2. Régression Multiple
+            </button>
+            <button onclick="showAnalysis('pca')" class="analysis-btn" id="btn_pca">
+                <i class="fas fa-compress-alt mr-2"></i>3. PCA (Réduction)
+            </button>
+            <button onclick="showAnalysis('classification')" class="analysis-btn" id="btn_classification">
+                <i class="fas fa-brain mr-2"></i>4. Classification
+            </button>
+            <button onclick="showAnalysis('clustering')" class="analysis-btn" id="btn_clustering">
+                <i class="fas fa-object-group mr-2"></i>5. Clustering
+            </button>
+        </div>
+    </div>
+
+    <!-- Conteneur pour les graphiques -->
+    <div class="glassmorphism rounded-xl p-6">
+        <div id="analysis-container" class="min-h-[500px]">
+            <div class="text-center py-12">
+                <div class="spinner mx-auto mb-4"></div>
+                <p class="text-gray-500">Chargement de l'analyse...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Options supplémentaires -->
+    <div class="glassmorphism rounded-xl p-6">
+        <h3 class="text-xl font-bold text-plum mb-4">
+            <i class="fas fa-sliders-h mr-2"></i>Options avancées
+        </h3>
+        <div class="grid md:grid-cols-3 gap-4">
+            <div>
+                <label class="form-label text-sm">Période d'analyse</label>
+                <select id="period" class="form-input text-sm" onchange="updateAnalysis()">
+                    <option value="all">Toutes les données</option>
+                    <option value="6">Derniers 6 mois</option>
+                    <option value="3">Derniers 3 mois</option>
+                    <option value="1">Dernier mois</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label text-sm">Type de graphique</label>
+                <select id="chart_type" class="form-input text-sm" onchange="updateChartType()">
+                    <option value="scatter">Nuage de points</option>
+                    <option value="line">Ligne</option>
+                    <option value="bar">Barres</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label text-sm">Exporter</label>
+                <div class="flex gap-2">
+                    <button onclick="exportChartAsPNG()" class="btn-primary text-sm py-2">
+                        <i class="fas fa-camera mr-1"></i>PNG
+                    </button>
+                    <button onclick="exportDataAsCSV()" class="btn-secondary text-sm py-2">
+                        <i class="fas fa-file-csv mr-1"></i>CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interprétation de l'analyse -->
+    <div class="glassmorphism rounded-xl p-6" id="interpretation-box">
+        <h3 class="text-xl font-bold text-plum mb-4">
+            <i class="fas fa-lightbulb mr-2"></i>Interprétation
+        </h3>
+        <div id="interpretation" class="text-gray-600 dark:text-gray-400">
+            Sélectionnez une technique d'analyse pour voir l'interprétation.
+        </div>
+    </div>
+</div>
+
+<style>
+    .analysis-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        background: rgba(132, 188, 22, 0.1);
+        color: #374151;
+        cursor: pointer;
+        border: 1px solid transparent;
+    }
+    
+    .dark .analysis-btn {
+        color: #E2E8F0;
+        background: rgba(132, 188, 22, 0.2);
+    }
+    
+    .analysis-btn.active {
+        background: #84CC16;
+        color: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .analysis-btn:hover:not(.active) {
+        background: rgba(132, 188, 22, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .spinner {
+        border: 3px solid rgba(132, 188, 22, 0.1);
+        border-radius: 50%;
+        border-top: 3px solid #84CC16;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+<script>
+    let currentChart = null;
+    let currentData = null;
+    
+    // Charger l'analyse par défaut
+    document.addEventListener('DOMContentLoaded', () => {
+        showAnalysis('regression_simple');
+    });
+    
+    function showAnalysis(type) {
+        // Mettre à jour les boutons actifs
+        document.querySelectorAll('.analysis-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.getElementById(`btn_${type}`).classList.add('active');
+        
+        // Afficher le chargement
+        const container = document.getElementById('analysis-container');
+        container.innerHTML = `
+            <div class="text-center py-12">
+                <div class="spinner mx-auto mb-4"></div>
+                <p class="text-gray-500">Chargement de l'analyse ${getAnalysisName(type)}...</p>
+            </div>
+        `;
+        
+        // Charger les données
+        fetch(`/api/user-analysis/${type}`)
+            .then(response => response.json())
+            .then(data => {
+                currentData = data;
+                if (data.error) {
+                    container.innerHTML = `
+                        <div class="text-center py-12">
+                            <i class="fas fa-exclamation-triangle text-6xl text-coral mb-4"></i>
+                            <p class="text-gray-500">${data.error}</p>
+                            <p class="text-sm text-gray-400 mt-2">Ajoutez plus de données santé pour voir les analyses</p>
+                        </div>
+                    `;
+                    document.getElementById('interpretation').innerHTML = data.error;
+                } else {
+                    renderChart(data);
+                    updateInterpretation(type, data);
+                }
+            })
+            .catch(error => {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-exclamation-triangle text-6xl text-coral mb-4"></i>
+                        <p class="text-gray-500">Erreur lors du chargement des données</p>
+                    </div>
+                `;
+            });
+    }
+    
+    function renderChart(data) {
+        const container = document.getElementById('analysis-container');
+        const chartType = document.getElementById('chart_type').value;
+        
+        let layout = {
+            title: data.title,
+            xaxis: { title: data.x_label },
+            yaxis: { title: data.y_label },
+            template: document.documentElement.classList.contains('dark') ? 'plotly_dark' : 'plotly_white',
+            height: 500,
+            hovermode: 'closest'
+        };
+        
+        let traces = [];
+        
+        if (data.type === 'regression_simple') {
+            traces.push({
+                x: data.x,
+                y: data.y,
+                mode: 'markers',
+                name: 'Données réelles',
+                marker: { color: '#84CC16', size: 10 }
+            });
+            if (data.prediction_line) {
+                traces.push({
+                    x: data.prediction_line.x,
+                    y: data.prediction_line.y,
+                    mode: 'lines',
+                    name: 'Régression',
+                    line: { color: '#7C3AED', width: 3 }
+                });
+            }
+        } 
+        else if (data.type === 'regression_multiple') {
+            traces.push({
+                x: data.x,
+                y: data.y_actual,
+                mode: chartType === 'scatter' ? 'markers' : chartType,
+                name: data.y_name,
+                marker: { color: '#FB7185', size: 8 }
+            });
+            if (data.y_predicted) {
+                traces.push({
+                    x: data.x,
+                    y: data.y_predicted,
+                    mode: 'lines',
+                    name: 'Prédiction',
+                    line: { color: '#84CC16', width: 2, dash: 'dash' }
+                });
+            }
+        }
+        else if (data.type === 'pca') {
+            traces.push({
+                x: data.pca_x,
+                y: data.pca_y,
+                mode: 'markers',
+                name: 'Points PCA',
+                marker: {
+                    size: 12,
+                    color: data.pca_x,
+                    colorscale: 'Viridis',
+                    showscale: true,
+                    colorbar: { title: "Composante 1" }
+                },
+                text: data.labels,
+                hoverinfo: 'text+x+y'
+            });
+        }
+        else if (data.type === 'classification') {
+            traces = data.models.map(model => ({
+                x: [model.name],
+                y: [model.accuracy],
+                type: 'bar',
+                name: model.name,
+                marker: { color: model.name === 'KNN' ? '#84CC16' : '#7C3AED' },
+                text: [`${model.accuracy.toFixed(1)}%`],
+                textposition: 'auto'
+            }));
+            layout.yaxis = { title: 'Précision (%)', range: [0, 100] };
+        }
+        else if (data.type === 'clustering') {
+            const colors = ['#84CC16', '#7C3AED', '#FB7185', '#FACC15', '#A7F3D0'];
+            for (let i = 0; i < data.clusters; i++) {
+                const mask = data.cluster_labels === i;
+                traces.push({
+                    x: data.points.filter((_, idx) => mask[idx]).map(p => p[0]),
+                    y: data.points.filter((_, idx) => mask[idx]).map(p => p[1]),
+                    mode: 'markers',
+                    name: `Cluster ${i + 1}`,
+                    marker: { color: colors[i % colors.length], size: 10 }
+                });
+            }
+        }
+        
+        Plotly.newPlot(container, traces, layout, { responsive: true });
+        currentChart = container;
+    }
+    
+    function updateInterpretation(type, data) {
+        const interpretations = {
+            'regression_simple': `
+                <div class="space-y-3">
+                    <p><strong>📈 Coefficient de corrélation:</strong> ${data.correlation || 'N/A'}</p>
+                    <p><strong>📐 Équation:</strong> ${data.equation || 'y = ax + b'}</p>
+                    <p><strong>💡 Interprétation:</strong> ${data.interpretation || 'Cette analyse montre la relation entre l\'IMC et votre poids.'}</p>
+                    <div class="bg-lime/10 p-3 rounded-lg mt-3">
+                        <i class="fas fa-info-circle text-lime mr-2"></i>
+                        <span class="text-sm">Un coefficient proche de 1 indique une forte corrélation positive.</span>
+                    </div>
+                </div>
+            `,
+            'regression_multiple': `
+                <div class="space-y-3">
+                    <p><strong>📊 R² (qualité du modèle):</strong> ${data.r2 || 'N/A'}</p>
+                    <p><strong>📐 Variables analysées:</strong> ${data.variables || 'Âge, IMC, Sommeil, Stress'}</p>
+                    <p><strong>💡 Interprétation:</strong> ${data.interpretation || 'Cette analyse montre comment plusieurs facteurs influencent votre santé.'}</p>
+                    <div class="bg-lime/10 p-3 rounded-lg mt-3">
+                        <i class="fas fa-info-circle text-lime mr-2"></i>
+                        <span class="text-sm">Un R² proche de 1 signifie que le modèle explique bien vos données.</span>
+                    </div>
+                </div>
+            `,
+            'pca': `
+                <div class="space-y-3">
+                    <p><strong>📉 Variance expliquée:</strong> ${data.variance_explained || 'N/A'}</p>
+                    <p><strong>🔬 Composantes principales:</strong> ${data.components || '2 composantes'}</p>
+                    <p><strong>💡 Interprétation:</strong> ${data.interpretation || 'La PCA réduit la complexité de vos données pour les visualiser en 2D.'}</p>
+                    <div class="bg-lime/10 p-3 rounded-lg mt-3">
+                        <i class="fas fa-info-circle text-lime mr-2"></i>
+                        <span class="text-sm">Les points proches indiquent des profils santé similaires.</span>
+                    </div>
+                </div>
+            `,
+            'classification': `
+                <div class="space-y-3">
+                    <p><strong>🤖 Modèles comparés:</strong> KNN vs Random Forest</p>
+                    <p><strong>✅ Précision KNN:</strong> ${data.knn_accuracy || 'N/A'}%</p>
+                    <p><strong>✅ Précision Random Forest:</strong> ${data.rf_accuracy || 'N/A'}%</p>
+                    <p><strong>💡 Interprétation:</strong> ${data.interpretation || 'Ces modèles prédisent votre niveau de risque santé.'}</p>
+                    <div class="bg-lime/10 p-3 rounded-lg mt-3">
+                        <i class="fas fa-info-circle text-lime mr-2"></i>
+                        <span class="text-sm">Plus la précision est élevée, plus le modèle est fiable.</span>
+                    </div>
+                </div>
+            `,
+            'clustering': `
+                <div class="space-y-3">
+                    <p><strong>🔢 Nombre de clusters:</strong> ${data.num_clusters || 3}</p>
+                    <p><strong>📊 Inertie (qualité):</strong> ${data.inertia || 'N/A'}</p>
+                    <p><strong>💡 Interprétation:</strong> ${data.interpretation || 'Cette analyse regroupe vos données en clusters similaires.'}</p>
+                    <div class="bg-lime/10 p-3 rounded-lg mt-3">
+                        <i class="fas fa-info-circle text-lime mr-2"></i>
+                        <span class="text-sm">Chaque cluster représente un profil santé différent.</span>
+                    </div>
+                </div>
+            `
+        };
+        
+        document.getElementById('interpretation').innerHTML = interpretations[type] || '<p>Sélectionnez une analyse pour voir l\'interprétation.</p>';
+    }
+    
+    function updateAnalysis() {
+        const activeBtn = document.querySelector('.analysis-btn.active');
+        if (activeBtn) {
+            const type = activeBtn.id.replace('btn_', '');
+            showAnalysis(type);
+        }
+    }
+    
+    function updateChartType() {
+        if (currentData && currentData.type !== 'classification') {
+            renderChart(currentData);
+        }
+    }
+    
+    function exportChartAsPNG() {
+        if (currentChart) {
+            Plotly.downloadImage(currentChart, {
+                format: 'png',
+                width: 1200,
+                height: 600,
+                filename: 'gsisad_analysis'
+            });
+            showToast('Graphique exporté en PNG', 'success');
+        }
+    }
+    
+    function exportDataAsCSV() {
+        if (currentData && currentData.csv_data) {
+            const blob = new Blob([currentData.csv_data], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'gsisad_analysis_data.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Données exportées en CSV', 'success');
+        } else {
+            showToast('Aucune donnée à exporter', 'error');
+        }
+    }
+    
+    function getAnalysisName(type) {
+        const names = {
+            'regression_simple': 'Régression Linéaire Simple',
+            'regression_multiple': 'Régression Linéaire Multiple',
+            'pca': 'Analyse en Composantes Principales (PCA)',
+            'classification': 'Classification Supervisée',
+            'clustering': 'Clustering Non-Supervisé'
+        };
+        return names[type] || type;
+    }
+    
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in ${
+            type === 'success' ? 'bg-lime text-white' : 'bg-coral text-white'
+        }`;
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+</script>
+{% endblock %}

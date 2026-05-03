@@ -438,6 +438,241 @@ def toggle_user(user_id):
 def admin_settings():
     return render_template('admin_settings.html')
 
+
+# ============ ANALYSE PERSONNELLE UTILISATEUR ============
+
+@app.route('/user-analysis')
+@login_required
+def user_analysis():
+    """Page d'analyse personnelle pour l'utilisateur"""
+    return render_template('user_analysis.html')
+
+@app.route('/api/user-analysis/<string:analysis_type>')
+@login_required
+def api_user_analysis(analysis_type):
+    """API pour les analyses personnelles de l'utilisateur"""
+    
+    # Récupérer les métriques de l'utilisateur
+    metrics = HealthMetrics.query.filter_by(user_id=current_user.id).order_by(HealthMetrics.recorded_at).all()
+    
+    if len(metrics) < 3:
+        return jsonify({'error': 'Données insuffisantes. Ajoutez au moins 3 bilans santé.'})
+    
+    # Préparer les données
+    dates = [m.recorded_at.strftime('%Y-%m-%d') for m in metrics]
+    bmi_values = [m.bmi for m in metrics]
+    health_scores = [m.health_score for m in metrics]
+    
+    # Calculer l'IMC cible (poids idéal)
+    weights = [current_user.weight] if current_user.weight else [70]
+    
+    if analysis_type == 'regression_simple':
+        # Régression IMC vs Score Santé
+        from sklearn.linear_model import LinearRegression
+        import numpy as np
+        
+        X = np.array(bmi_values).reshape(-1, 1)
+        y = np.array(health_scores)
+        
+        if len(X) >= 2:
+            model = LinearRegression()
+            model.fit(X, y)
+            
+            bmi_range = np.linspace(min(bmi_values), max(bmi_values), 50).reshape(-1, 1)
+            scores_pred = model.predict(bmi_range)
+            
+            # Calculer corrélation
+            correlation = np.corrcoef(bmi_values, health_scores)[0, 1]
+            
+            return jsonify({
+                'type': 'regression_simple',
+                'title': 'Régression: IMC vs Score de Santé',
+                'x': bmi_values,
+                'y': health_scores,
+                'x_label': 'IMC (kg/m²)',
+                'y_label': 'Score de Santé (/100)',
+                'prediction_line': {
+                    'x': bmi_range.flatten().tolist(),
+                    'y': scores_pred.tolist()
+                },
+                'correlation': round(correlation, 3),
+                'equation': f"Score = {model.coef_[0]:.2f} × IMC + {model.intercept_:.2f}",
+                'interpretation': f"Votre analyse montre une corrélation de {abs(correlation):.2f}. " + 
+                                 ("Une augmentation de l'IMC diminue votre score santé." if correlation < 0 else "IMC et score santé augmentent ensemble."),
+                'csv_data': generate_csv_data([('Date', dates), ('IMC', bmi_values), ('Score Santé', health_scores)])
+            })
+    
+    elif analysis_type == 'regression_multiple':
+        # Régression multiple: tension artérielle
+        import numpy as np
+        from sklearn.linear_model import LinearRegression
+        
+        # Utiliser les données de l'utilisateur
+        X_multiple = []
+        y_tension = []
+        
+        for m in metrics:
+            if current_user.age and current_user.sleep_hours and current_user.stress_level:
+                X_multiple.append([
+                    current_user.age,
+                    m.bmi,
+                    current_user.sleep_hours or 7,
+                    current_user.stress_level or 5
+                ])
+                y_tension.append(current_user.systolic_bp or 120)
+        
+        if len(X_multiple) >= 2:
+            model = LinearRegression()
+            model.fit(X_multiple, y_tension)
+            r2 = model.score(X_multiple, y_tension)
+            
+            # Prédictions
+            y_pred = model.predict(X_multiple)
+            
+            return jsonify({
+                'type': 'regression_multiple',
+                'title': 'Régression Multiple: Facteurs influençant la tension',
+                'x': list(range(len(y_tension))),
+                'y_actual': y_tension,
+                'y_predicted': y_pred.tolist(),
+                'y_name': 'Tension artérielle',
+                'x_label': 'Mesures dans le temps',
+                'y_label': 'Pression systolique (mmHg)',
+                'r2': round(r2, 3),
+                'variables': 'Âge, IMC, Sommeil, Stress',
+                'interpretation': f"Votre modèle explique {r2*100:.1f}% des variations de tension. " +
+                                 f"Les facteurs les plus influents sont l'IMC et le stress.",
+                'csv_data': generate_csv_data([('Mesure', range(len(y_tension))), ('Tension Réelle', y_tension), ('Tension Prédite', y_pred)])
+            })
+    
+    elif analysis_type == 'pca':
+        # PCA sur les données personnelles
+        from sklearn.decomposition import PCA
+        from sklearn.preprocessing import StandardScaler
+        import numpy as np
+        
+        features = []
+        for m in metrics:
+            features.append([m.bmi, m.health_score, m.bmr])
+        
+        if len(features) >= 3:
+            X = np.array(features)
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X)
+            
+            pca = PCA(n_components=2)
+            X_pca = pca.fit_transform(X_scaled)
+            
+            return jsonify({
+                'type': 'pca',
+                'title': 'PCA - Visualisation 2D de vos données',
+                'pca_x': X_pca[:, 0].tolist(),
+                'pca_y': X_pca[:, 1].tolist(),
+                'labels': [f"Mesure {i+1}" for i in range(len(X_pca))],
+                'x_label': f'Première composante ({pca.explained_variance_ratio_[0]*100:.1f}%)',
+                'y_label': f'Deuxième composante ({pca.explained_variance_ratio_[1]*100:.1f}%)',
+                'variance_explained': f"{sum(pca.explained_variance_ratio_)*100:.1f}%",
+                'components': 2,
+                'interpretation': f"La PCA capture {sum(pca.explained_variance_ratio_)*100:.1f}% de la variance de vos données. " +
+                                 "Les points proches indiquent des bilans santé similaires."
+            })
+    
+    elif analysis_type == 'classification':
+        # Classification supervisée (KNN vs Random Forest)
+        from sklearn.neighbors import KNeighborsClassifier
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.model_selection import train_test_split
+        import numpy as np
+        
+        # Simuler des données de classification basées sur l'historique
+        X_class = []
+        y_class = []
+        
+        for m in metrics:
+            X_class.append([m.bmi, m.health_score])
+            if m.risk_level == 'high':
+                y_class.append(2)
+            elif m.risk_level == 'medium':
+                y_class.append(1)
+            else:
+                y_class.append(0)
+        
+        if len(set(y_class)) >= 2 and len(X_class) >= 4:
+            X_train, X_test, y_train, y_test = train_test_split(X_class, y_class, test_size=0.3, random_state=42)
+            
+            knn = KNeighborsClassifier(n_neighbors=3)
+            knn.fit(X_train, y_train)
+            knn_acc = knn.score(X_test, y_test) * 100
+            
+            rf = RandomForestClassifier(n_estimators=50, random_state=42)
+            rf.fit(X_train, y_train)
+            rf_acc = rf.score(X_test, y_test) * 100
+            
+            return jsonify({
+                'type': 'classification',
+                'title': 'Classification - Prédiction du niveau de risque',
+                'models': [
+                    {'name': 'KNN', 'accuracy': knn_acc},
+                    {'name': 'Random Forest', 'accuracy': rf_acc}
+                ],
+                'knn_accuracy': round(knn_acc, 1),
+                'rf_accuracy': round(rf_acc, 1),
+                'interpretation': f"KNN: {knn_acc:.1f}% de précision, Random Forest: {rf_acc:.1f}%. " +
+                                 f"Le modèle {'Random Forest' if rf_acc > knn_acc else 'KNN'} est plus performant pour vos données."
+            })
+    
+    elif analysis_type == 'clustering':
+        # Clustering K-Means
+        from sklearn.cluster import KMeans
+        import numpy as np
+        
+        cluster_data = [[m.bmi, m.health_score] for m in metrics]
+        
+        if len(cluster_data) >= 3:
+            X = np.array(cluster_data)
+            n_clusters = min(3, len(X))
+            kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+            clusters = kmeans.fit_predict(X)
+            
+            return jsonify({
+                'type': 'clustering',
+                'title': 'Clustering - Regroupement de vos bilans santé',
+                'points': cluster_data,
+                'cluster_labels': clusters.tolist(),
+                'clusters': n_clusters,
+                'num_clusters': n_clusters,
+                'inertia': round(kmeans.inertia_, 2),
+                'x_label': 'IMC (kg/m²)',
+                'y_label': 'Score de Santé (/100)',
+                'interpretation': f"Vos {len(cluster_data)} bilans santé sont regroupés en {n_clusters} clusters. " +
+                                 "Chaque cluster représente un profil santé différent dans le temps."
+            })
+    
+    return jsonify({'error': 'Analyse non disponible pour le moment'})
+
+def generate_csv_data(columns):
+    """Génère du CSV à partir des données"""
+    import csv
+    from io import StringIO
+    
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow([col[0] for col in columns])
+    
+    # Trouver la longueur maximale
+    max_len = max(len(col[1]) for col in columns)
+    
+    for i in range(max_len):
+        row = []
+        for col in columns:
+            if i < len(col[1]):
+                row.append(col[1][i])
+            else:
+                row.append('')
+        writer.writerow(row)
+    
+    return output.getvalue()
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
